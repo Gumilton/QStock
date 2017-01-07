@@ -1,4 +1,4 @@
-import sys, argparse
+import argparse
 from Trainer import Trainer
 from Predictor import Predictor
 from Updater import Updater
