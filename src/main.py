@@ -16,19 +16,22 @@ def argParser():
     parser.add_argument("-a", "--all", dest = "allStocks", action ="store_true", required = False, default=False)
     parser.add_argument("-v", "--verbose", action = "store_true", dest = "verbose", default=False)
     parser.add_argument("--num_states", dest = "num_states", default=100)
+    parser.add_argument("-w", "--window", dest = "window", default=10)
     parser.add_argument("--num_actions", dest = "num_actions", default = 4)
     parser.add_argument("--alpha", dest = "alpha", default = 0.2)
     parser.add_argument("--gamma", dest = "gamma", default = 0.9)
     parser.add_argument("--rar", dest = "rar", default = 0.5)
     parser.add_argument("--radr", dest = "radr", default = 0.99)
     parser.add_argument("--dyna", dest = "dyna", default = 0)
-                            
+
 
     args = parser.parse_args()
     print(args)
 
     if args.stocks == None and not args.allStocks:
         parser.error('must specify stocks used for training, by -s [--stock] or -a [--all] for all available stocks')
+
+    #//TODO: process stock symbols
 
     if args.mode == "train":
         if args.startTrainDate == None or args.endTrainDate == None:
