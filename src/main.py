@@ -15,6 +15,14 @@ def argParser():
     parser.add_argument("-e", "--end", dest = "endTrainDate", type=str, required = False)
     parser.add_argument("-a", "--all", dest = "allStocks", action ="store_true", required = False, default=False)
     parser.add_argument("-v", "--verbose", action = "store_true", dest = "verbose", default=False)
+    parser.add_argument("--num_states", dest = "num_states", default=100)
+    parser.add_argument("--num_actions", dest = "num_actions", default = 4)
+    parser.add_argument("--alpha", dest = "alpha", default = 0.2)
+    parser.add_argument("--gamma", dest = "gamma", default = 0.9)
+    parser.add_argument("--rar", dest = "rar", default = 0.5)
+    parser.add_argument("--radr", dest = "radr", default = 0.99)
+    parser.add_argument("--dyna", dest = "dyna", default = 0)
+                            
 
     args = parser.parse_args()
     print(args)
@@ -25,13 +33,11 @@ def argParser():
     if args.mode == "train":
         if args.startTrainDate == None or args.endTrainDate == None:
             parser.error('must specify start date or end date for training model')
-        # TO DO
-        # check date correctness
+        # //TODO: check date correctness
     elif args.mode == "predict":
         if args.today == None:
             parser.error('must specify date to suggest action')
-        # TO DO
-        # check date correctness
+        # //TODO: check date correctness
     else:
         pass
 
