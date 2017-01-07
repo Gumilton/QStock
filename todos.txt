@@ -1,0 +1,15 @@
+* util: 
+    read stocks
+    web download stocks
+    check dates corret
+    market simulator
+    generate plot
+
+* train
+
+
+* predict
+
+
+
+* update
