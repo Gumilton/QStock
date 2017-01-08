@@ -1,10 +1,26 @@
 import pandas as pd
 import numpy as np
 import os
+import pandas_datareader.data as web
+import datetime
+import matplotlib.pyplot as plt
+
+def getWebStock(startyear, startmonth, startday, endyear, endmonth, endday, stockname):
+    start = datetime.datetime(startyear,startmonth,startday)
+    end = datetime.datetime(endyear,endmonth,endday)
+    stock = web.DataReader(stockname, 'yahoo', start, end)
+    stock.to_csv('stockname.csv')
 
 
-def getWebStock():
-    pass
+def plotstockhistory(startyear, startmonth, startday, endyear, endmonth, endday, stockname):
+    start = datetime.datetime(startyear,startmonth,startday)
+    end = datetime.datetime(endyear,endmonth,endday)
+    stock = web.DataReader(stockname, 'yahoo', start, end)
+    stockadjclose = stock["Adj Close"]
+
+    plt.figure()
+    stockadjclose.plot()
+    plt.show()
 
 def readStocks(symbols, dates, addSPY=True, colname = 'Adj Close'):
     """Read stock data (adjusted close) for given symbols from CSV files."""
