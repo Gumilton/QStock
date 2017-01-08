@@ -128,7 +128,7 @@ class Trainer():
         # return reward, next dateIndex
         # print(data.head())
         if status == action == 0:
-            return - math.fabs(data.ix[dateIndex + 1, 1]/data.ix[dateIndex, 1] - 1) / 10, dateIndex + 1, action
+            return - abs(data.ix[dateIndex + 1, 1]/data.ix[dateIndex, 1] - 1) / 10, dateIndex + 1, action
 
         if status == 0 and action == 1:
             # if buy
