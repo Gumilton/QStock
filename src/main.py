@@ -11,7 +11,9 @@ def args2Stocks(arg):
     loyal3Stocks = ut.getLoyal3List()
     if arg.allStocks:
         return loyal3Stocks
-    tempStocks = arg.stocks.split(",")
+    if arg.verbose:
+        print("Input stocks: " + str(arg.stocks))
+    tempStocks = arg.stocks
     stock = []
     for sym in tempStocks:
         if sym in loyal3Stocks:
@@ -45,7 +47,7 @@ def argParser():
     if args.stocks == None and not args.allStocks:
         parser.error('must specify stocks used for training, by -s [--stock] or -a [--all] for all available stocks')
 
-    #//TODO: process stock symbols
+
     args.stocks = args2Stocks(args)
 
 
