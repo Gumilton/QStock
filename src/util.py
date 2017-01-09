@@ -30,25 +30,30 @@ def readStocks(symbols, dates, addSPY=True, colname = 'Adj Close'):
     if addSPY and 'SPY' not in symbols:  # add SPY for reference, if absent
         symbols = ['SPY'] + symbols
 
+    allStocksFiles = getAllStockFileName()
     for symbol in symbols:
-        df_temp = pd.read_csv(symbol_to_path(symbol), index_col='Date',
-                parse_dates=True, usecols=['Date', colname], na_values=['nan'])
-        df_temp = df_temp.rename(columns={colname: symbol})
-        df = df.join(df_temp)
-        # if symbol == 'SPY':  # drop dates SPY did not trade
-        #     df = df.dropna(subset=["SPY"])
+        if symbol in allStocksFiles:
+            df_temp = pd.read_csv(os.path.join("..", "dat", "stocks",symbol), index_col='Date',
+                    parse_dates=True, usecols=['Date', colname], na_values=['nan'])
+            df_temp = df_temp.rename(columns={colname: symbol})
+            df = df.join(df_temp)
+            # if symbol == 'SPY':  # drop dates SPY did not trade
+            #     df = df.dropna(subset=["SPY"])
 
     return df
 
+def getAllStockFileName():
+    return {file.split("_")[0]:file for file in os.listdir(os.path.join("..", "dat", "stocks"))}
 
-def symbol_to_path(symbol, base_dir=os.path.join("..", "dat", "stocks")):
-    """Return CSV file path given ticker symbol."""
-    return os.path.join(base_dir, "{}.csv".format(str(symbol)))
+
+
+# def symbol_to_path(symbol, base_dir=os.path.join("..", "dat", "stocks")):
+#     """Return CSV file path given ticker symbol."""
+#     return os.path.join(base_dir, "{}.csv".format(str(symbol)))
 
 
 def compute_portvals(orders, start_date, end_date, start_val = 100000):
     # this is the function the autograder will call to test your code
-    # TODO: Your code here
 
     stocks = orders.Symbol.unique().tolist()
 
