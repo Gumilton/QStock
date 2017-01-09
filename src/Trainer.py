@@ -3,6 +3,7 @@ import random as rand
 import pandas as pd
 import util as ut
 import pickle
+from indicators import transform, getTokens
 
 
 class QLearner(object):
@@ -69,61 +70,6 @@ class Trainer():
         self.learner = QLearner(args)
         self.para = args
 
-    def getSMA(self, stock, window = 10):
-        sma_ind = stock.copy()
-        sma = stock.copy()
-        size = stock.shape[0]
-
-        for i in range(window-1, size):
-            sma[i] = stock[(i-window+1):i].mean()
-        sma[:(window-1)] = np.nan
-        sma_ind = sma_ind/sma - 1
-
-        return sma_ind, sma
-
-    def getBB(self, stock, sma, window = 10):
-        std = stock.copy()
-        size = stock.shape[0]
-        for i in range(window-1, size):
-            std[i] = stock[(i-window+1):i].std()
-        std[:window-1] = np.nan
-
-        return (stock - sma)/ 2 / std
-
-    def getEMA(self, stock, sma, window = 10):
-        mult = (2 / (window + 1.0))
-        ema = (stock - sma) * mult + sma
-        return stock/ema - 1, ema
-
-    def transform(self, stock, window = 10):
-
-        sma_ind, sma = self.getSMA(stock, window)
-        bb = self.getBB(stock, sma, window)
-        ema_ind, ema = self.getEMA(stock, sma, window)
-
-        data = pd.concat((stock,sma_ind, bb, ema_ind), axis=1)
-        data.columns = ["OriPrice", "sma_ind", "bb", "ema_ind"]
-        return data
-
-
-    def getTokens(self, indi):
-        indi.dropna(inplace=True)
-        sma_bins = [np.NINF, -0.06, -0.04, -0.02, -0.01, 0.01, 0.02, 0.03, 0.06, np.PINF]
-        smas = pd.cut(indi["sma_ind"], bins = sma_bins, labels = range(1,10))
-
-        bb_bins = [np.NINF, -1.6, -0.9, -0.5, -0.2, 0.2, 0.5, 0.9, 1.6, np.PINF]
-        bb = pd.cut(indi["bb"], bins = bb_bins, labels = range(1,10))
-
-        ema_bins = [np.NINF, -0.06,-0.03, -0.02,  -0.01, 0.01, 0.02, 0.03,0.06, np.PINF]
-        emas = pd.cut(indi["ema_ind"], bins = ema_bins, labels = range(1,10))
-
-        tokens = bb.astype(str).str.cat(smas.astype(str)).str.cat(emas.astype(str))
-
-        tokenized = pd.concat((tokens, indi["OriPrice"]), axis = 1)
-        tokenized.columns = ["tokens", "Price"]
-
-        return tokenized
-
     def calcReward(self, status, action, dateIndex, data):
         # return reward, next dateIndex
         # print(data.head())
@@ -156,14 +102,14 @@ class Trainer():
     def addEvidence(self, symbol, sd, ed):
 
         dates = pd.date_range(sd, ed)
-        prices_all = ut.readStock(symbol, dates)  # automatically adds SPY
+        prices_all = ut.readStocks(symbol, dates)  # automatically adds SPY
         prices = prices_all[symbol]  # only portfolio symbols
         prices_SPY = prices_all['SPY']  # only SPY, for comparison later
-
+        # print(prices.head(10))
         # print(prices.head())
-        indi = self.transform(prices)
-        tokens = self.getTokens(indi)
-
+        indi = transform(prices)
+        tokens = getTokens(indi)
+        # print(tokens)
         # if self.verbose: print (tokens["tokens"].describe())
 
         # print (tokens["tokens"].describe())
@@ -173,7 +119,7 @@ class Trainer():
         numIter = 0
         status = 0
         old_total_reward = 0
-
+        ncom = 0
         # action {0: "nothing", 1:"buy", 2:"sell"}
 
         while numIter < maxIter:
@@ -193,9 +139,13 @@ class Trainer():
             print(total_reward)
 
             if total_reward == old_total_reward:
-                break
+                ncom += 1
+            else:
+                old_total_reward = total_reward
+                ncom = 0
 
-            old_total_reward = total_reward
+            if ncom > 5:
+                break
 
 
         # example use with new colname
@@ -207,16 +157,21 @@ class Trainer():
 
     def query(self, symbol, sd, ed):
         dates = pd.date_range(sd, ed)
-        prices_all = ut.readStock(symbol, dates)  # automatically adds SPY
+        prices_all = ut.readStocks(symbol, dates)  # automatically adds SPY
         prices = prices_all[symbol]  # only portfolio symbols
         trades_SPY = prices_all['SPY']  # only SPY, for comparison later
 
-        indi = self.transform(prices[symbol])
-        tokens = self.getTokens(indi)
+        indi = transform(prices[symbol])
+        tokens = getTokens(indi)
+
+        # print(tokens)
+        # print(symbol)
 
         orders = pd.DataFrame(index=tokens.index, columns=["Symbol", "Order", "Shares"])
-        orders["Symbol"] = symbol
-        orders["Shares"] = 1000.0
+
+        # print(orders)
+        orders.ix[:,"Symbol"] = symbol[0]
+        orders.ix[:,"Shares"] = 10.0
 
         dateInd = 0
 
@@ -226,36 +181,18 @@ class Trainer():
             dateInd += 1
 
         orders.dropna(inplace=True)
-        indices = [0]
-        orders.iloc[0,2] = 500
-        status = orders.iloc[0,1]
-        for i in range(1, orders.shape[0]):
-            newStatus = orders.iloc[i,1]
-            if newStatus != status:
-                indices.append(i)
-                status = newStatus
+        cleaned = ut.cleanOrders(orders)
 
-        cleanOrders = orders.iloc[indices,:]
-        trades = pd.DataFrame(0, index=prices.index, columns=[symbol])
-        trades.ix[(cleanOrders[cleanOrders.iloc[:,1] == "SELL"]).index] = -1000
-        trades.ix[(cleanOrders[cleanOrders.iloc[:,1] == "BUY"]).index] = 1000
-        firstIndex = trades[trades.iloc[:,0] != 0].index[0]
-        trades.ix[firstIndex] = trades.ix[firstIndex] / abs(trades.ix[firstIndex]) * 500
-
-        # trades.values[:,:] = 0 # set them all to nothing
-        # trades.values[3,:] = 500 # add a BUY at the 4th date
-        # trades.values[5,:] = -500 # add a SELL at the 6th date
-        # trades.values[6,:] = -500 # add a SELL at the 7th date
-        # trades.values[8,:] = 1000 # add a BUY at the 9th date
-        # if self.verbose: print type(trades) # it better be a DataFrame!
-        # if self.verbose: print trades
-        # if self.verbose: print prices_all
-        return trades
+        return cleaned
 
 
     def storeModel(self, outfile):
         with open(outfile, 'wb') as output:
             pickle.dump(self.learner, output, pickle.HIGHEST_PROTOCOL)
+
+    def loadModel(self, infile):
+        with open(infile, 'rb') as input:
+            self.learner = pickle.load(input)
 
     def train(self):
         pass
