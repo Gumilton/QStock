@@ -93,6 +93,6 @@ def compute_portvals(orders, start_date, end_date, start_val = 100000):
     return pd.DataFrame(portvals)
 
 def getLoyal3List():
-    stocks = pd.read_csv(os.path.join("..", "dat", "stocks", "loyal3_availability.csv"))["Sym."].values
+    stocks = pd.read_csv(os.path.join("..", "doc", "loyal3_availability.csv"))["Sym."].values
     stocks = np.core.defchararray.replace(stocks.astype("str"), ".", "-")
     return list(stocks)
