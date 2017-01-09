@@ -2,19 +2,21 @@ import pandas as pd
 import numpy as np
 import os
 import pandas_datareader.data as web
-import datetime
+import datetime as dt
 import matplotlib.pyplot as plt
 
-def getWebStock(startyear, startmonth, startday, endyear, endmonth, endday, stockname):
-    start = datetime.datetime(startyear,startmonth,startday)
-    end = datetime.datetime(endyear,endmonth,endday)
-    stock = web.DataReader(stockname, 'yahoo', start, end)
-    stock.to_csv('stockname.csv')
+def getWebStock(stockSym, startDate = "2001-1-1", verbose = False):
+    # start = dt.datetime(startyear,startmonth,startday)
+    # end = dt.datetime(endyear,endmonth,endday)
+    stock = web.DataReader(stockSym, 'yahoo', start=startDate)
+    stock.to_csv(os.path.join("..", "dat", "{}.csv".format(str(stockSym))))
+    if verbose:
+        print(stockSym + " is updated by " + str(dt.date.today()))
 
 
 def plotstockhistory(startyear, startmonth, startday, endyear, endmonth, endday, stockname):
-    start = datetime.datetime(startyear,startmonth,startday)
-    end = datetime.datetime(endyear,endmonth,endday)
+    start = dt.datetime(startyear,startmonth,startday)
+    end = dt.datetime(endyear,endmonth,endday)
     stock = web.DataReader(stockname, 'yahoo', start, end)
     stockadjclose = stock["Adj Close"]
 
@@ -90,3 +92,7 @@ def compute_portvals(orders, start_date, end_date, start_val = 100000):
     portvals = (prices * holdings).sum(axis = 1)
     return pd.DataFrame(portvals)
 
+def getLoyal3List():
+    stocks = pd.read_csv(os.path.join("..", "dat", "loyal3_availability.csv"))["Sym."].values
+    stocks = np.core.defchararray.replace(stocks.astype("str"), ".", "-")
+    return list(stocks)
