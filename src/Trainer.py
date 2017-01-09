@@ -34,7 +34,7 @@ class QLearner(object):
             action = rand.randint(0, self.num_actions-1)
             self.rar = self.rar * self.radr
 
-        if self.verbose: print "s =", s,"a =",action
+        # if self.verbose: print "s =", s,"a =",action
         self.a = action
         return action
 
@@ -54,7 +54,7 @@ class QLearner(object):
             action = rand.randint(0, self.num_actions-1)
             self.rar = self.rar * self.radr
 
-        if self.verbose: print "s =", s_prime,"a =",action,"r =",r
+        # if self.verbose: print "s =", s_prime,"a =",action,"r =",r
         self.a = action
         self.s = s_prime
         return action

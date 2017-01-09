@@ -2,9 +2,23 @@ import argparse
 from Trainer import Trainer
 from Predictor import Predictor
 from Updater import Updater
+import util as ut
 
 def splitInputArgComma(arg):
     return arg.split(",")
+
+def args2Stocks(arg):
+    loyal3Stocks = ut.getLoyal3List()
+    if arg.allStocks:
+        return loyal3Stocks
+    tempStocks = arg.stocks.split(",")
+    stock = []
+    for sym in tempStocks:
+        if sym in loyal3Stocks:
+            stock.append(sym)
+        else:
+            print("".join(["Input stock ", sym, " is not available for trading"]))
+    return stock
 
 def argParser():
     parser = argparse.ArgumentParser()
@@ -32,6 +46,8 @@ def argParser():
         parser.error('must specify stocks used for training, by -s [--stock] or -a [--all] for all available stocks')
 
     #//TODO: process stock symbols
+    args.stocks = args2Stocks(args)
+
 
     if args.mode == "train":
         if args.startTrainDate == None or args.endTrainDate == None:
@@ -53,6 +69,7 @@ def handler(args):
         predicter = Predictor(args)
     else:
         updater = Updater(args)
+        updater.update()
 
 if __name__ == "__main__":
     args = argParser()
