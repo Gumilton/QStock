@@ -33,14 +33,14 @@ def readStocks(symbols, dates, addSPY=True, colname = 'Adj Close'):
     allStocksFiles = getAllStockFileName()
     for symbol in symbols:
         if symbol in allStocksFiles:
-            df_temp = pd.read_csv(os.path.join("..", "dat", "stocks",symbol), index_col='Date',
+            df_temp = pd.read_csv(os.path.join("..", "dat", "stocks", allStocksFiles[symbol]), index_col='Date',
                     parse_dates=True, usecols=['Date', colname], na_values=['nan'])
             df_temp = df_temp.rename(columns={colname: symbol})
             df = df.join(df_temp)
             # if symbol == 'SPY':  # drop dates SPY did not trade
             #     df = df.dropna(subset=["SPY"])
 
-    return df
+    return df.dropna()
 
 def getAllStockFileName():
     return {file.split("_")[0]:file for file in os.listdir(os.path.join("..", "dat", "stocks"))}
@@ -56,9 +56,6 @@ def compute_portvals(orders, start_date, end_date, start_val = 100000):
     # this is the function the autograder will call to test your code
 
     stocks = orders.Symbol.unique().tolist()
-
-    # In the template, instead of computing the value of the portfolio, we just
-    # read in the value of IBM over 6 months
     prices = readStocks(stocks, pd.date_range(start_date, end_date))
     prices = prices[stocks]  # remove SPY
 
@@ -69,8 +66,6 @@ def compute_portvals(orders, start_date, end_date, start_val = 100000):
     orders.loc[orders.Order == "SELL", "Shares"] = - orders.loc[orders.Order == "SELL", "Shares"]
 
     prices["cash"] = 1
-
-    # temp = pd.DataFrame(0, index = prices.index, columns=["cash"])
 
     trades = pd.pivot_table(orders, values = "Shares", index = orders.index, columns = "Symbol", aggfunc=np.sum)
     trades = trades[prices.columns[:-1]]
@@ -101,3 +96,44 @@ def getLoyal3List():
     stocks = pd.read_csv(os.path.join("..", "doc", "loyal3_availability.csv"))["Sym."].values
     stocks = np.core.defchararray.replace(stocks.astype("str"), ".", "-")
     return list(stocks)
+
+def cleanOrders(orders):
+
+    # one buy one sell
+    indices = [0]
+    status = orders.iloc[0, 1]
+    for i in range(1, orders.shape[0]):
+        newStatus = orders.iloc[i, 1]
+        if newStatus == status:
+            continue
+        else:
+            indices.append(i)
+            status = newStatus
+    #
+    cleanOrders = orders.iloc[indices, :]
+    if cleanOrders.iloc[0, 1] == "SELL":
+        cleanOrders = cleanOrders.iloc[1:, :]
+
+
+    # # allow multiple buys but single sell
+    # indices = [0]
+    # # orders.iloc[0,2] = 500
+    # status = orders.iloc[0, 1]
+    # for i in range(1, orders.shape[0]):
+    #     newStatus = orders.iloc[i, 1]
+    #     if newStatus == status == "SELL":
+    #         continue
+    #     else:
+    #         indices.append(i)
+    #         status = newStatus
+    #
+    #         # orders.iloc[0,2] = 500
+    # shares = 0
+    # for j in range(0, cleanOrders.shape[0]):
+    #     if cleanOrders.iloc[j,1] == "BUY":
+    #         shares += cleanOrders.iloc[j,2]
+    #     else:
+    #         cleanOrders.iloc[j, 2] = shares
+    #         shares = 0
+
+    return cleanOrders

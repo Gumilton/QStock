@@ -5,29 +5,65 @@ import datetime as dt
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def getSMA(stock, window = 10):
+
+def getSMA(stock, window=10):
     sma_ind = stock.copy()
+    # print(sma_ind.head())
     sma = stock.copy()
     size = stock.shape[0]
-    for i in range(window-1, size):
-        sma[i] = stock[(i-window+1):i].mean()
-    sma[:window-1] = np.nan
-    sma_ind = sma_ind/sma - 1
+
+    for i in range(window - 1, size):
+        sma.iloc[i, 0] = stock.iloc[(i - window + 1):i, 0].mean()
+    sma.iloc[:(window - 1), 0] = np.nan
+    sma_ind = sma_ind / sma - 1
+    # print(sma_ind.head(20))
     return sma_ind, sma
 
-def getBB(stock, sma, window = 10):
+
+def getBB(stock, sma, window=10):
     std = stock.copy()
     size = stock.shape[0]
-    for i in range(window-1, size):
-        std[i] = stock[(i-window+1):i].std()
-    std[:window-1] = np.nan
+    for i in range(window - 1, size):
+        std.iloc[i, 0] = stock.iloc[(i - window + 1):i, 0].std()
+    std.iloc[:window - 1, 0] = np.nan
 
-    return (stock - sma)/ 2 / std
+    return (stock - sma) / 2 / std
 
-def getEMA(stock, sma, window = 10):
+
+def getEMA(stock, sma, window=10):
     mult = (2 / (window + 1.0))
     ema = (stock - sma) * mult + sma
-    return stock/ema - 1, ema
+    return stock / ema - 1, ema
+
+
+def transform(stock, window=10):
+    sma_ind, sma = getSMA(stock, window)
+    bb = getBB(stock, sma, window)
+    ema_ind, ema = getEMA(stock, sma, window)
+    # print(bb)
+    data = pd.concat((stock, sma_ind, bb, ema_ind), axis=1)
+    # print(data)
+    data.columns = ["OriPrice", "sma_ind", "bb", "ema_ind"]
+    return data
+
+
+def getTokens(indi):
+    indi.dropna(inplace=True)
+    sma_bins = [np.NINF, -0.06, -0.04, -0.02, -0.01, 0.01, 0.02, 0.03, 0.06, np.PINF]
+    smas = pd.cut(indi["sma_ind"], bins=sma_bins, labels=range(1, 10))
+
+    bb_bins = [np.NINF, -1.6, -0.9, -0.5, -0.2, 0.2, 0.5, 0.9, 1.6, np.PINF]
+    bb = pd.cut(indi["bb"], bins=bb_bins, labels=range(1, 10))
+
+    ema_bins = [np.NINF, -0.06, -0.03, -0.02, -0.01, 0.01, 0.02, 0.03, 0.06, np.PINF]
+    emas = pd.cut(indi["ema_ind"], bins=ema_bins, labels=range(1, 10))
+
+    tokens = bb.astype(str).str.cat(smas.astype(str)).str.cat(emas.astype(str))
+
+    tokenized = pd.concat((tokens, indi["OriPrice"]), axis=1)
+    tokenized.columns = ["tokens", "Price"]
+
+    return tokenized
 
 
 def getMomentum(stock, window = 10):
@@ -36,22 +72,6 @@ def getMomentum(stock, window = 10):
     momentum[(window - 1):] = stock[(window - 1):].values / stock[:(stock.shape[0] - window+1)].values - 1
     momentum[:window-1] = np.nan
     return momentum
-
-def transform(stock, window = 10):
-
-    sma_ind, sma = getSMA(stock, window)
-    bb = getBB(stock, sma, window)
-    ema_ind, ema = getEMA(stock, sma, window)
-
-    # momentum is only used for ML training data Y label
-    momentum = getMomentum(stock, window)
-
-    data = pd.concat((stock, stock/stock[0] - 1, sma, sma_ind, bb, ema, ema_ind, momentum), axis=1)
-    data.columns = ["OriPrice", "RelPrice", "sma", "sma_ind", "bb", "ema", "ema_ind", "momentum"]
-    return data
-
-
-
 
 # if __name__ == "__main__":
 #     sym = "IBM"
