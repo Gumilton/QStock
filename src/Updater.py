@@ -14,4 +14,10 @@ class Updater():
 
     def update(self):
         for sym in self.args.stocks:
-            ut.getWebStock(stockSym = sym, verbose = self.args.verbose)
+            try:
+                ut.getWebStock(stockSym = sym, verbose = self.args.verbose)
+            except Exception as inst:
+                print(sym + " errors:")
+                print(type(inst))
+                print(inst.args)
+                print(inst)
