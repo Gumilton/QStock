@@ -9,7 +9,7 @@ def getWebStock(stockSym, startDate = "2001-1-1", verbose = False):
     # start = dt.datetime(startyear,startmonth,startday)
     # end = dt.datetime(endyear,endmonth,endday)
     stock = web.DataReader(stockSym, 'yahoo', start=startDate)
-    stock.to_csv(os.path.join("..", "dat", "stocks", "{}.csv".format(str(stockSym))))
+    stock.to_csv(os.path.join("..", "dat", "stocks", "{}.csv".format(str(stockSym) + "_" + str(dt.date.today()))))
     if verbose:
         print(stockSym + " is updated by " + str(dt.date.today()))
 
@@ -93,6 +93,6 @@ def compute_portvals(orders, start_date, end_date, start_val = 100000):
     return pd.DataFrame(portvals)
 
 def getLoyal3List():
-    stocks = pd.read_csv(os.path.join("..", "dat", "loyal3_availability.csv"))["Sym."].values
+    stocks = pd.read_csv(os.path.join("..", "dat", "stocks", "loyal3_availability.csv"))["Sym."].values
     stocks = np.core.defchararray.replace(stocks.astype("str"), ".", "-")
     return list(stocks)
