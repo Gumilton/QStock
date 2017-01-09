@@ -9,7 +9,7 @@ def getWebStock(stockSym, startDate = "2001-1-1", verbose = False):
     # start = dt.datetime(startyear,startmonth,startday)
     # end = dt.datetime(endyear,endmonth,endday)
     stock = web.DataReader(stockSym, 'yahoo', start=startDate)
-    stock.to_csv(os.path.join("..", "dat", "{}.csv".format(str(stockSym))))
+    stock.to_csv(os.path.join("..", "dat", "stocks", "{}.csv".format(str(stockSym))))
     if verbose:
         print(stockSym + " is updated by " + str(dt.date.today()))
 
@@ -41,7 +41,7 @@ def readStocks(symbols, dates, addSPY=True, colname = 'Adj Close'):
     return df
 
 
-def symbol_to_path(symbol, base_dir=os.path.join("..", "dat")):
+def symbol_to_path(symbol, base_dir=os.path.join("..", "dat", "stocks")):
     """Return CSV file path given ticker symbol."""
     return os.path.join(base_dir, "{}.csv".format(str(symbol)))
 
